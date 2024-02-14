@@ -1,0 +1,11 @@
+{
+  "name": "synced-server",
+  "version": "1.0.0",
+  "description": "Backend Server Component for Synced",
+  "main": "synced-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Atheesh Thirumalairajan",
+  "license": "ISC"
+}
