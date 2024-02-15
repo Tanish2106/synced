@@ -1,7 +1,9 @@
 const express = require('express')
 const { Server } = require('socket.io');
 const { createServer } = require('node:http');
-const port = 5000
+const SyncedRTCHandler = require('./middleware/SyncedRTCHandler');
+const port = 6000
+
 
 /* Init Required Modules */
 const app = express();
@@ -14,4 +16,5 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
+  new SyncedRTCHandler(io).init();
 })
