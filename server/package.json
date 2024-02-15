@@ -1,5 +1,6 @@
 {
   "name": "synced-server",
+  "private": true,
   "version": "1.0.0",
   "description": "Backend Server Component for Synced",
   "main": "synced-server.js",
