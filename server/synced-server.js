@@ -38,7 +38,11 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
+
+  /* Define Required Contollers */
+  const rtcUserController = new SyncedRTCUserController();
+
   new SyncedDatabaseMiddleware(app).init();
   new SyncedRTCHandler(io).init();
-  new SyncedRTCRoomController(app, io).init();
+  new SyncedRTCRoomController(app, io, rtcUserController).init();
 })
