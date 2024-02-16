@@ -20,12 +20,17 @@ const express = require('express')
 const { Server } = require('socket.io');
 const { createServer } = require('node:http');
 const SyncedRTCHandler = require('./middleware/SyncedRTCHandler');
-const port = 6000
+const SyncedDatabaseMiddleware = require('./middleware/SyncedDatabaseMiddleware');
+const SyncedRTCRoomController = require('./middleware/SyncedRTCRoomController');
+const port = 8000
 
 /* Init Required Modules */
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
+
+/* Add Body Parser Module */
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
@@ -33,5 +38,7 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
+  new SyncedDatabaseMiddleware(app).init();
   new SyncedRTCHandler(io).init();
+  new SyncedRTCRoomController(app, io).init();
 })
