@@ -21,6 +21,7 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import SyncedAppThemeController from './middleware/SyncedAppThemeController'
 import { Route, Routes } from 'react-router-dom';
 import SyncedRouterPage from './integrals/SyncedRouterPage';
+import SyncedAuthPage from './integrals/SyncedAuthPage';
 
 const App = () => {
   /*
@@ -42,6 +43,7 @@ const App = () => {
 
       { /* Define Frontend Routing */}
       <Routes>
+        <Route path='/login' element={<SyncedAuthPage />} />
         <Route path='/*' element={<SyncedRouterPage toggleTheme={toggleTheme} />} />
       </Routes>
     </ThemeProvider>

@@ -20,14 +20,11 @@ const express = require('express')
 const { Server } = require('socket.io');
 const { createServer } = require('node:http');
 const SyncedRTCHandler = require('./middleware/SyncedRTCHandler');
-const SyncedRTCRoomController = require('./middleware/SyncedRTCRoomController');
-const SyncedRTCUserController = require('./middleware/SyncedRTCUserController');
-const SyncedAuthController = require('./middleware/SyncedAuthController');
 const port = 8000
 
 /* Set Cors Config */
 const corsConfig = {
-  origin: ['http://localhost:6001'],
+  origin: ['http://localhost:6001', 'http://10.104.188.229:6001'],
   methods: ['GET', 'POST'],
   credentials: true
 };
@@ -38,8 +35,9 @@ const cors = require('cors')
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser')
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: corsConfig
+const io_collab = new Server(httpServer, {
+  cors: corsConfig,
+  path: "/rtc/collab"
 });
 
 /* Get ENV Variables */
@@ -58,9 +56,5 @@ httpServer.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 
   /* Define Required Contollers */
-  const rtcUserController = new SyncedRTCUserController();
-
-  new SyncedRTCHandler(io).init();
-  new SyncedAuthController(app, rtcUserController).init();
-  new SyncedRTCRoomController(app, io, rtcUserController).init();
+  new SyncedRTCHandler(app, io_collab);
 })

@@ -16,15 +16,57 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Box, Button, Divider, IconButton, Stack, Toolbar, Typography } from "@mui/material";
-import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
+import { Box, Button, Divider, Stack, Toolbar, Typography } from "@mui/material";
 import SyncedErrorPage from "./SyncedErrorPage";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import CollabJoinOptions from "../components/CollabJoinOptions";
 import CollabRoomCore from "../components/CollabRoomCore";
 import Groups2Icon from '@mui/icons-material/Groups2';
+import React from "react";
+import axios from "axios";
+import SyncedAppConfig from "../middleware/SyncedAppConfig";
+import { io } from "socket.io-client";
+
+const RequiresAuth = (props) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+
+    React.useEffect(() => {
+        /* Verify JWT Token */
+        axios.get(`${SyncedAppConfig.getServerURL()}/auth/verify`, { withCredentials: true })
+            .then((res) => { setIsAuthenticated(true); })
+            .catch((err) => { setIsAuthenticated(false); })
+            .finally(() => { setIsLoading(false); });
+    }, []);
+
+    return (
+        (isLoading) ?
+            <></> :
+            (isAuthenticated) ?
+                props.children :
+                <Navigate to={`/login?for=${location.pathname}`} />
+    );
+}
 
 const SyncedRouterPage = (props) => {
+    /* Define Required Instance Variables */
+    const [socket, setSocket] = React.useState(null);
+
+    React.useEffect(() => {
+        setSocket(
+            io(
+                SyncedAppConfig.getWsURL(),
+                {
+                    path: '/rtc/collab',
+                    withCredentials: true
+                }
+            )
+        );
+    }, []);
+
     return (
         <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Toolbar sx={{ boxShadow: 0, display: 'flex', alignItems: 'center' }}>
@@ -34,7 +76,7 @@ const SyncedRouterPage = (props) => {
                 </Stack>
 
                 { /* Sign In or Avatar */}
-                <Button sx={{ borderRadius: '10px' }} variant="contained">Sign In</Button>
+                <Button sx={{ borderRadius: '10px' }} variant="outlined">Sign In</Button>
             </Toolbar>
             <Divider />
             <Box
@@ -47,8 +89,9 @@ const SyncedRouterPage = (props) => {
                 }}
             >
                 <Routes>
-                    <Route path="/collab" element={<CollabJoinOptions />} />
-                    <Route path="/collab/*" element={<CollabRoomCore />} />
+                    <Route path="/collab" element={<RequiresAuth><CollabJoinOptions socket={socket} /></RequiresAuth>} />
+                    <Route path="/collab/*" element={<RequiresAuth><CollabRoomCore socket={socket} /></RequiresAuth>} />
+                    <Route path="/" element={<Navigate to="/collab" />} />
                     <Route path='/*' element={<SyncedErrorPage />} />
                 </Routes>
             </Box>
