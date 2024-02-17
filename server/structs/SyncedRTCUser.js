@@ -23,6 +23,8 @@ const SyncedRTCUser = class {
     constructor(username) {
         this.userId = uuid.v4();
         this.username = username;
+        this.lastModified = Date.now();
+        this.socket = undefined;
     }
 };
 

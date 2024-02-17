@@ -20,26 +20,27 @@
 const uuid = require("uuid");
 
 const SyncedRTCRoom = class {
-    constructor(creatorId) {
+    /* Creator is a SyncedRTCUser */
+    constructor(creator) {
         this.roomId = uuid.v4();
-        this.hosts = [creatorId];
+        this.hosts = [creator];
         this.online = [];
         this.waitingRoom = [];
         this.lastModified = Date.now();
     }
 
-    addToHost = (userId) => {
-        this.hosts.push(userId);
+    addToHost = (user) => {
+        this.hosts.push(user);
         this.lastModified = Date.now();
     }
 
-    addToOnline = (userId) => {
-        this.online.push(userId);
+    addToOnline = (user) => {
+        this.online.push(user);
         this.lastModified = Date.now();
     }
 
-    addToWaitingRoom = (userId) => {
-        this.waitingRoom.push(userId);
+    addToWaitingRoom = (user) => {
+        this.waitingRoom.push(user);
         this.lastModified = Date.now();
     }
 }

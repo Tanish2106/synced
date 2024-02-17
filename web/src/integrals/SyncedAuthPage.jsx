@@ -16,33 +16,10 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import * as React from 'react';
-import { Box, Button, Paper, Typography } from "@mui/material";
-import AddIcon from '@mui/icons-material/Add';
-import Groups2Icon from '@mui/icons-material/Groups2';
-import axios from 'axios';
-import SyncedAppConfig from '../middleware/SyncedAppConfig';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { useNavigate } from 'react-router-dom';
+import { Box, Dialog, DialogContent, Paper } from "@mui/material";
+import AuthPageDialog from "../components/AuthPageDialog";
 
-const CollabJoinOptions = (props) => {
-    /* Define Required React State Variables */
-    const socket = props.socket;
-    const navigate = useNavigate();
-    const [isLoading, setIsLoading] = React.useState(false);
-
-    /* Define Required Middleware Functions */
-    const handleCreateRoom = async () => {
-        /* Set Loading */
-        setIsLoading(true);
-
-        /* Create a New Room */
-        socket.emit("fe-rooms-create", (roomId) => {
-            /* Navigate to New Page */
-            return navigate(`/collab/${roomId}`);
-        });
-    }
-
+const SyncedAuthPage = (props) => {
     return (
         <Box sx={{ background: 'url("/collab-planet.png");', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', width: "100%", height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Paper
@@ -58,12 +35,10 @@ const CollabJoinOptions = (props) => {
                     justifyContent: 'center',
                 }}
             >
-                <Groups2Icon sx={{ fontSize: '8rem' }} />
-                <Typography variant="h4">Stream Together.</Typography>
-                <LoadingButton loading={isLoading} onClick={handleCreateRoom} sx={{ marginTop: '20px', borderRadius: '10px' }} variant="contained" startIcon={<AddIcon />}>Create New Room</LoadingButton>
+                <AuthPageDialog />
             </Paper>
         </Box>
     );
 }
 
-export default CollabJoinOptions;
+export default SyncedAuthPage;

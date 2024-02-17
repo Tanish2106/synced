@@ -23,32 +23,52 @@ const SyncedAuthController = class {
     constructor(app, rtcUserController) {
         this.app = app;
         this.rtcUserController = rtcUserController;
-        this.jwtSecret = process.env.JWT_SECRET;
+    }
+
+    /* Define Required Auth Middleware */
+    static verifyToken = (authToken, callback) => {
+        jwt.verify(authToken, process.env.JWT_SECRET, callback);
+    }
+
+    /* Define Express Auth Middleware */
+    static isOnboarded = (req, res, next) => {
+        this.verifyToken(req.cookies.authToken, (err, data) => {
+            /* Return if Error */
+            if (err) return next(err);
+
+            /* Set req.token */
+            req.token = data;
+            next();
+        });
     }
 
     init = () => {
         this.app.get("/auth/verify", (req, res) => {
             /* Auto Renew the JWT token if user exists in the user controller */
             if (!req.cookies.authToken) return res.status(400).json({ status: false, message: "Authentication Token does not exist" })
-            
+
             /* Verify JWT */
-            jwt.verify(req.cookies.authToken, this.jwtSecret, (err, data) => {
-                if (err) 
+            SyncedAuthController.verifyToken(req.cookies.authToken, (err, data) => {
+                if (err)
                     return res.status(401).json({ status: false, message: "Authentication Token Verification Failed" });
 
-                res.status(200).json({ status: true });
+                if (this.rtcUserController.getUser(data.userId))
+                    res.status(200).json({ status: true, userData: { ...data.username } });
+
+                else
+                    res.status(401).json({ status: false, message: "User Expired" });
             });
         });
 
-        this.app.post("/auth/login", (req, res) => {            
+        this.app.post("/auth/login", (req, res) => {
             if (req.body.username && req.body.anonymous) {
                 /* Use Anonymous Authorization, Create New User */
                 const newUserId = this.rtcUserController.createUser(req.body.username);
-                
+
                 /* Sign The JWT */
                 const authToken = jwt.sign(
-                    { userId: newUserId, username: req.body.username }, 
-                    this.jwtSecret, 
+                    { userId: newUserId, username: req.body.username, anonymous: true },
+                    process.env.JWT_SECRET,
                     { expiresIn: '1800s' }
                 );
 

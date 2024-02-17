@@ -20,14 +20,8 @@
 const SyncedRTCRoom = require('../structs/SyncedRTCRoom');
 
 const SyncedRTCRoomController = class {
-    constructor(app, io, rtcUserController) {
-        this.app = app;
-        this.io = io;
-        this.rtcUserController = rtcUserController;
+    constructor() {
         this.rooms = {};
-
-        /* Create Handler for SocketIO Communications */
-        this.handleSocketComm();
         this.clearInactiveRooms();
     }
 
@@ -35,12 +29,6 @@ const SyncedRTCRoomController = class {
     isRoomAccessAuthorized = (roomId) => {
         /* Always Calls Next, Indicates Successful authorization */
         next();
-    }
-    
-    isOnboarded = (req, res, next) => {
-        /* Express Middlware that checks if user has registered */
-        
-        /* If Not Onboarded, Onboard Them. Sign JWT with Unique ID */
     }
 
     /* This function delete rooms with an Inactivity over 10 minutes */
@@ -51,42 +39,38 @@ const SyncedRTCRoomController = class {
                 if (Date.now() - rtcRoom.lastModified > 1800000)
                     delete this.rooms[room];
             });
-        }, 600000);
+        }, 900000);
     }
 
-    handleSocketComm = () => {
-        this.io.on('connection', (socket) => {
-            socket.on('fe-rooms-join', (data, callback) => {
-                if (this.rooms[data.roomId]) {
-                    
-                } else {
-                    /* Callback Error */
-                    callback({ status: false })
-                }
-            });
-
-            socket.on('fe-rooms-waitlistaction', (data) => {
-                if (data.roomId && data.username && data.jwt) {
-
-                }
-            });
-        });
-    }
-
-    createRoom = (creatorId) => {
-        const newRoom = new SyncedRTCRoom(creatorId);
+    createRoom = (creator) => {
+        /* this.rtcUserController.getUser(creatorId) */
+        const newRoom = new SyncedRTCRoom(creator);
         this.rooms[newRoom.roomId] = newRoom;
 
         /* Return Room ID */
         return newRoom.roomId;
     }
 
-    init = () => {
-        this.app.post("/rooms/create", this.isOnboarded, (req, res) => {
-            /* Should be req.token.userId */
-            let createdRoomId = this.createRoom(req.body.userId);
-            res.status(200).json({ roomId: createdRoomId });
-        });
+    joinRoom = (roomId, user) => {
+        const room = this.getRoom(roomId);
+        if (!room) return false;
+
+        /* Check if user is a host */
+        if (room.hosts.includes(user)) {
+            /* Add User to Room directly */
+            //room.addToOnline(user);
+            //user.socket.join(room.roomId);
+        } else {
+            room.addToWaitingRoom(user);
+        }
+    }
+
+    getRoom = (roomId) => {
+        /* Update Room Last Modified */
+        if (this.rooms[roomId])
+            this.rooms[roomId].lastModified = Date.now();
+
+        return this.rooms[roomId];
     }
 };
 
