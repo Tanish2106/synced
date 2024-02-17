@@ -1,7 +1,7 @@
 const config = {
     serverProtocol: 'http',
     wsProtocol: 'ws',
-    serverURL: '10.104.188.229:8000',
+    serverURL: '10.104.95.222:8000',
 };
 
 const getServerURL = () => {

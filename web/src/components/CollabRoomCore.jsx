@@ -67,10 +67,10 @@ const CollabRoomCore = (props) => {
     const [dialogOpen, setDialogOpen] = React.useState(true);
     const [isJoined, setIsJoined] = React.useState(false);
 
-    const initRTCMiddleware = () => {
-        /* Split Pathname to get RoomId */
-        const roomId = location.pathname.split("/").pop();
+    /* Split Pathname to get RoomId */
+    const roomId = location.pathname.split("/").pop();
 
+    const initRTCMiddleware = () => {
         /* Configure SocketIO Middleware */
         socket.emit("fe-rooms-join", roomId, (err, res) => {
             if (err) return setDialogPage(<DialogRoomJoinError title={err} />);
@@ -98,6 +98,11 @@ const CollabRoomCore = (props) => {
                 setDialogPage(<DialogRoomJoinError title="You can't join this Room" />)
             }
         });
+
+        /* Server Sends new Chat Message */
+        socket.on('be-chats-message', (req) => {
+            console.log(req);
+        });
     }
 
     const beRoomsGuestJoinRequestAction = (userId, roomId, approved) => {
@@ -109,10 +114,22 @@ const CollabRoomCore = (props) => {
         );
     }
 
+    const feChatsMessageSend = (message) => {
+        socket.emit(
+            "fe-chats-message",
+            { roomId, message },
+            (e) => { console.log(e) }
+        );
+    }
+
     React.useEffect(() => {
         /* Configure RTC Middleware */
         initRTCMiddleware();
     }, []);
+
+    React.useEffect(() => {
+        if (isJoined) feChatsMessageSend("Hello World!");
+    }, [isJoined]);
 
     return (
         <Box sx={{ width: '100%', height: '100%' }}>
