@@ -70,10 +70,20 @@ const SyncedRTCHandler = class {
     }
 
     defineSocketEvents = (socket) => {
+        /* Create a New Room Request */
         socket.on("fe-rooms-create", (callback) => {
             const roomId = this.rtcRoomController.createRoom(socket.rtcUser);
             callback(roomId);
         });
+
+        /* 
+            How does the waitlist flow work?
+            1. fe-rooms-join: Emitted when a client requests to join room.
+            2. If client is not host, be-rooms-guestJoinRequest sent to hosts
+            3. Host acts on request using fe-rooms-guestJoinAction
+            4. Once one host has approved, all hosts are sent a be-rooms-guestJoinRevoke
+            5. Client is sent a be-rooms-waitlistResolution
+        */
 
         socket.on("fe-rooms-join", (roomId, callback) => {
             const room = this.rtcRoomController.getRoom(roomId);
@@ -130,7 +140,7 @@ const SyncedRTCHandler = class {
 
             /* Check if User is Host */
             if (!room.hosts.includes(socket.rtcUser))
-            return callback("Only Hosts Can Approve Guests");
+                return callback("Only Hosts Can Approve Guests");
 
             /* Check if Requested User Exists */
             const user = this.rtcUserController.getUser(req.userId);
@@ -178,7 +188,49 @@ const SyncedRTCHandler = class {
             /* Return A Success Message */
             return callback(null, { status: true });
         });
-    }
-};
+
+        /*
+            Process Chat Messages:
+            1. Client emits fe-chats-message
+            2. Check if socket is a part of request roomId
+            3. Emit a be-chats-message Event appropriately
+
+            Request Structure:
+            req.roomId: Room ID
+            req.message: Chat Message Content
+
+            Response Structure:
+            res.userId: socket.rtcUser.userId
+            res.username: socket.rtcUser.username
+            res.message: req.message
+            res.time: new Date().getTime();
+        */
+
+        socket.on('fe-chats-message', (req, callback) => {
+            /* Check if Room Exists */
+            const room = this.rtcRoomController.getRoom(req.roomId);
+            if (!room) return callback("Room Not Found!", null);
+
+            /* Check if Message is within Limits */
+            if (!(req.message.trim().length > 1))
+                return callback("Invalid Message", null);
+
+            if (!socket.rooms.has(room.roomId))
+                return callback("You're not a part of this room", null);
+
+            this.io.in(room.roomId).emit('be-chats-message', {
+                userId: socket.rtcUser.userId,
+                username: socket.rtcUser.username,
+                message: req.message,
+                time: new Date().getTime()
+            });
+        });
+
+        /*
+            Process a Socket Disconnect. Steps to Follow:
+            L. Notify Users
+        */
+    };
+}
 
 module.exports = SyncedRTCHandler;

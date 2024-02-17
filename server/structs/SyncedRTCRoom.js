@@ -24,23 +24,6 @@ const SyncedRTCRoom = class {
     constructor(creator) {
         this.roomId = uuid.v4();
         this.hosts = [creator];
-        this.online = [];
-        this.waitingRoom = [];
-        this.lastModified = Date.now();
-    }
-
-    addToHost = (user) => {
-        this.hosts.push(user);
-        this.lastModified = Date.now();
-    }
-
-    addToOnline = (user) => {
-        this.online.push(user);
-        this.lastModified = Date.now();
-    }
-
-    addToWaitingRoom = (user) => {
-        this.waitingRoom.push(user);
         this.lastModified = Date.now();
     }
 }
