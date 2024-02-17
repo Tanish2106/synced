@@ -20,29 +20,47 @@ const express = require('express')
 const { Server } = require('socket.io');
 const { createServer } = require('node:http');
 const SyncedRTCHandler = require('./middleware/SyncedRTCHandler');
-const SyncedDatabaseMiddleware = require('./middleware/SyncedDatabaseMiddleware');
 const SyncedRTCRoomController = require('./middleware/SyncedRTCRoomController');
+const SyncedRTCUserController = require('./middleware/SyncedRTCUserController');
+const SyncedAuthController = require('./middleware/SyncedAuthController');
 const port = 8000
+
+/* Set Cors Config */
+const corsConfig = {
+  origin: ['http://localhost:6001'],
+  methods: ['GET', 'POST'],
+  credentials: true
+};
 
 /* Init Required Modules */
 const app = express();
+const cors = require('cors')
+const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser')
 const httpServer = createServer(app);
-const io = new Server(httpServer);
+const io = new Server(httpServer, {
+  cors: corsConfig
+});
+
+/* Get ENV Variables */
+dotenv.config();
 
 /* Add Body Parser Module */
 app.use(express.json());
+app.use(cookieParser());
+app.use(cors(corsConfig));
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 
   /* Define Required Contollers */
   const rtcUserController = new SyncedRTCUserController();
 
-  new SyncedDatabaseMiddleware(app).init();
   new SyncedRTCHandler(io).init();
+  new SyncedAuthController(app, rtcUserController).init();
   new SyncedRTCRoomController(app, io, rtcUserController).init();
 })

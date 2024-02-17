@@ -18,30 +18,27 @@
 */
 
 /* Import Required Libraries */
-const uuid = require('uuid');
+const SyncedRTCUser = require('../structs/SyncedRTCUser');
 
 const SyncedRTCUserController = class {
     constructor() {
         this.users = {};
     }
 
-    createUser = (username) => {
-        const userId = uuid.v4();
-        this.users[userId] = {
-            username,
-            lastModified: Date.now()
-        };
-
-        /* Set Self-Destruction Timer */
-        this.users[userId].expiryTimer
-            = setInterval(() => {
-                if (Date.now() - this.users[userId].lastModified > 600000) {
-                    clearInterval(this.users[userId].expiryTimer);
-                    delete this.users[userId];
-                }
-            }, 600000);
+    clearInactiveUsers = () => {
+        Object.keys(this.users).forEach((user) => {
+            if (Date.now() - this.users[user].lastModified > 1800000)
+                delete this.users[user.userId]
+        });
     }
 
+    createUser = (username) => {
+        const newUser = new SyncedRTCUser(username);
+        this.users[newUser.userId] = newUser;
+
+        /* Returns UserID of created User */
+        return newUser.userId;
+    }
 }
 
-module.exports(SyncedRTCUserController);
+module.exports = SyncedRTCUserController;

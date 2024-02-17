@@ -25,7 +25,6 @@ import SyncedRouterPage from './integrals/SyncedRouterPage';
 const App = () => {
   /*
     Primary roles of this component.
-    0. Connect to SocketIO Server
     1. Check for JWT Auth in required Middleware
   */
 

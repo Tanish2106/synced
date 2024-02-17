@@ -17,17 +17,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-const uuid = require('uuid');
-
-const isRoomAccessAuthorized = (roomId) => {
-    /* Always Calls Next, Indicates Successful authorization */
-    next();
-}
-
-const isOnboarded = (req, res, next) => {
-    /* Express Middlware that checks if user has registered */
-    
-}
+const SyncedRTCRoom = require('../structs/SyncedRTCRoom');
 
 const SyncedRTCRoomController = class {
     constructor(app, io, rtcUserController) {
@@ -38,6 +28,30 @@ const SyncedRTCRoomController = class {
 
         /* Create Handler for SocketIO Communications */
         this.handleSocketComm();
+        this.clearInactiveRooms();
+    }
+
+    /* Define Express and IO Middleware */
+    isRoomAccessAuthorized = (roomId) => {
+        /* Always Calls Next, Indicates Successful authorization */
+        next();
+    }
+    
+    isOnboarded = (req, res, next) => {
+        /* Express Middlware that checks if user has registered */
+        
+        /* If Not Onboarded, Onboard Them. Sign JWT with Unique ID */
+    }
+
+    /* This function delete rooms with an Inactivity over 10 minutes */
+    clearInactiveRooms = () => {
+        setInterval(() => {
+            Object.keys(this.rooms).forEach((room) => {
+                let rtcRoom = this.rooms[room];
+                if (Date.now() - rtcRoom.lastModified > 1800000)
+                    delete this.rooms[room];
+            });
+        }, 600000);
     }
 
     handleSocketComm = () => {
@@ -60,28 +74,15 @@ const SyncedRTCRoomController = class {
     }
 
     createRoom = (creatorId) => {
-        const roomId = uuid.v4();
-        this.rooms[roomId] = {
-            hosts: [creatorId],
-            online: [],
-            waitingRoom: [],
-            lastModified: Date.now()
-        };
-        
-        /* Set Self-Destruction Timer */
-        this.rooms[roomId].expiryTimer
-            = setInterval(() => {
-                if (Date.now() - this.rooms[roomId].lastModified > 600000) {
-                    clearInterval(this.rooms[roomId].expiryTimer);
-                    delete this.rooms[roomId];
-                }
-            }, 600000);
+        const newRoom = new SyncedRTCRoom(creatorId);
+        this.rooms[newRoom.roomId] = newRoom;
 
-        return roomId;
+        /* Return Room ID */
+        return newRoom.roomId;
     }
 
     init = () => {
-        this.app.post("/rooms/create", isOnboarded, (req, res) => {
+        this.app.post("/rooms/create", this.isOnboarded, (req, res) => {
             /* Should be req.token.userId */
             let createdRoomId = this.createRoom(req.body.userId);
             res.status(200).json({ roomId: createdRoomId });

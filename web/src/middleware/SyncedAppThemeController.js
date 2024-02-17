@@ -4,8 +4,13 @@ let appTheme = {
     palette: {
          mode: 'light',
          primary: {
-            main: '#e71302'
+            main: '#ffe212'
          }
+    },
+    typography: {
+        button: {
+            fontWeight: 'bold'
+        }
     },
     components: {
         MuiOutlinedInput: {
@@ -15,7 +20,15 @@ let appTheme = {
                 }
             }
         },
-
+        MuiButton: {
+            styleOverrides: {
+                fontWeight: 'bold',
+                root: {
+                    height: '40px',
+                    borderRadius: '10px'
+                }
+            }
+        }
     }
 };
 

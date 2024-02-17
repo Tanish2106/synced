@@ -17,16 +17,13 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-const SyncedRTCHandler = class {
-    constructor(io) {
-        this.io = io;
-    }
+const uuid = require("uuid");
 
-    init = () => {
-        this.io.on('connection', (socket) => {
-            console.log(socket.request.headers);
-        });        
+const SyncedRTCUser = class {
+    constructor(username) {
+        this.userId = uuid.v4();
+        this.username = username;
     }
 };
 
-module.exports = SyncedRTCHandler;
+module.exports = SyncedRTCUser;

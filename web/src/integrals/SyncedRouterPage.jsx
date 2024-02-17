@@ -18,33 +18,23 @@
 
 import { Box, Button, Divider, IconButton, Stack, Toolbar, Typography } from "@mui/material";
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
-import SyncedAppThemeController from "../middleware/SyncedAppThemeController";
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
 import SyncedErrorPage from "./SyncedErrorPage";
 import { Route, Routes } from "react-router-dom";
 import CollabJoinOptions from "../components/CollabJoinOptions";
+import CollabRoomCore from "../components/CollabRoomCore";
+import Groups2Icon from '@mui/icons-material/Groups2';
 
 const SyncedRouterPage = (props) => {
     return (
         <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Toolbar sx={{ display: 'flex', alignItems: 'center' }}>
+            <Toolbar sx={{ boxShadow: 0, display: 'flex', alignItems: 'center' }}>
                 <Stack sx={{ flexGrow: 1 }} direction="row" spacing={1}>
-                    <OndemandVideoIcon sx={{ color: '#e71302', fontSize: '2rem' }} />
-                    <Typography variant='h5' sx={{ lineHeight: 1.5 }}>Synced</Typography>
+                    <Groups2Icon sx={{ color: 'primary.main', fontSize: '2rem' }} />
+                    <Typography variant='h5' sx={{ lineHeight: 1.6 }}>Synced</Typography>
                 </Stack>
 
-                { /* Dark Mode Switch Button */}
-                <IconButton onClick={props.toggleTheme} sx={{ color: 'inherit', marginRight: '15px', borderRadius: '50%' }}>
-                    {
-                        (SyncedAppThemeController.isLightMode()) ?
-                            <DarkModeIcon /> :
-                            <LightModeIcon />
-                    }
-                </IconButton>
-
                 { /* Sign In or Avatar */}
-                <Button variant="outlined">Sign In</Button>
+                <Button sx={{ borderRadius: '10px' }} variant="contained">Sign In</Button>
             </Toolbar>
             <Divider />
             <Box
@@ -58,6 +48,7 @@ const SyncedRouterPage = (props) => {
             >
                 <Routes>
                     <Route path="/collab" element={<CollabJoinOptions />} />
+                    <Route path="/collab/*" element={<CollabRoomCore />} />
                     <Route path='/*' element={<SyncedErrorPage />} />
                 </Routes>
             </Box>

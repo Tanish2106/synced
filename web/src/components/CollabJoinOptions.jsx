@@ -16,36 +16,41 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import * as React from 'react';
 import { Box, Button, Paper, Typography } from "@mui/material";
-import GroupIcon from '@mui/icons-material/Group';
 import AddIcon from '@mui/icons-material/Add';
 import Groups2Icon from '@mui/icons-material/Groups2';
 
 const CollabJoinOptions = (props) => {
+    /* Define Required React State Variables */
+    const socket = props.socket;
+    const [isNewRoomLoading, setIsNewRoomLoading] = React.useState(false);
+
+    /* Define Required Middleware Functions */
+    const createRoom = () => {
+        /* Send a fe-rooms-create emission */
+    }
+
     return (
-        <Paper
-            sx={{
-                boxShadow: 0,
-                border: 'solid',
-                borderWidth: { xs: '0px', md: '1px' },
-                borderColor: 'rgba(0, 0, 0, 0.12)',
-                borderRadius: '10px',
-                padding: '10px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: { xs: '100%', md: '50%' },
-                height: { xs: '100%', md: '60%' },
-                justifyContent: 'center',
-            }}
-        >
-            <Groups2Icon sx={{ fontSize: '8rem' }} />
-            <Typography variant="h4">Stream Together.</Typography>
-            <Box sx={{ marginTop: '20px', display: 'flex', gap: '15px', flexDirection: { xs: 'column', md: 'row' } }}>
-                <Button variant="contained" startIcon={<AddIcon />}>Create New Room</Button>
-                <Button variant="outlined" startIcon={<GroupIcon />}>Join Existing Room</Button>
-            </Box>
-        </Paper>
+        <Box sx={{ background: 'url("/collab-planet.png");', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', width: "100%", height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Paper
+                sx={{
+                    boxShadow: { xs: 0, md: 5 },
+                    borderRadius: '10px',
+                    padding: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: { xs: '100%', md: '50%' },
+                    height: { xs: '100%', md: '60%' },
+                    justifyContent: 'center',
+                }}
+            >
+                <Groups2Icon sx={{ fontSize: '8rem' }} />
+                <Typography variant="h4">Stream Together.</Typography>
+                <Button sx={{ marginTop: '20px', borderRadius: '10px' }} variant="contained" startIcon={<AddIcon />}>Create New Room</Button>
+            </Paper>
+        </Box>
     );
 }
 

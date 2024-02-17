@@ -17,16 +17,31 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-const SyncedRTCHandler = class {
-    constructor(io) {
-        this.io = io;
+const uuid = require("uuid");
+
+const SyncedRTCRoom = class {
+    constructor(creatorId) {
+        this.roomId = uuid.v4();
+        this.hosts = [creatorId];
+        this.online = [];
+        this.waitingRoom = [];
+        this.lastModified = Date.now();
     }
 
-    init = () => {
-        this.io.on('connection', (socket) => {
-            console.log(socket.request.headers);
-        });        
+    addToHost = (userId) => {
+        this.hosts.push(userId);
+        this.lastModified = Date.now();
     }
-};
 
-module.exports = SyncedRTCHandler;
+    addToOnline = (userId) => {
+        this.online.push(userId);
+        this.lastModified = Date.now();
+    }
+
+    addToWaitingRoom = (userId) => {
+        this.waitingRoom.push(userId);
+        this.lastModified = Date.now();
+    }
+}
+
+module.exports = SyncedRTCRoom;
