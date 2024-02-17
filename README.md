@@ -4,5 +4,4 @@
 Write an App Description Here.
 
 # Screenshots
-<img width="1512" alt="image" src="https://github.com/candiedoperation/synced/assets/63508332/f3f4761c-ba6d-47ed-8282-a18c2af280c0">
-
+![Screenshot 001](https://github.com/candiedoperation/synced/assets/63508332/f3f4761c-ba6d-47ed-8282-a18c2af280c0)
