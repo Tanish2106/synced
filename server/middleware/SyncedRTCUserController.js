@@ -27,34 +27,6 @@ const SyncedRTCUserController = class {
         this.clearInactiveUsers();
     }
 
-    // handleSocketComm = () => {
-    //     this.io.on("connection", (socket) => {
-    //         /* Disconnect on Invalid Headers */
-    //         if (!socket.request.headers.cookie) return socket.disconnect();
-
-    //         /* Verify Auth Token */
-    //         const cookies = parseCookies(socket.request.headers.cookie);
-    //         SyncedAuthController.verifyToken(cookies.authToken, (err, user) => {
-    //             /* Disconnect on Error */
-    //             if (err) return socket.disconnect();
-    //             if (!this.getUser(user.userId)) return socket.disconnect();
-
-    //             /* Listen for Socket Events */
-    //             this.defineSocketEvents(socket, user);
-                
-    //             /* Map socket to user */
-    //             this.getUser(user.userId).socket = socket;
-    //         });
-    //     });
-    // }
-
-    // defineSocketEvents = (socket, user) => {
-    //     socket.on("fe-users-heartbeat", () => {
-    //         /* Getting a User Resets Last Modified */
-    //         this.getUser(user.userId);
-    //     });
-    // }
-
     clearInactiveUsers = () => {
         setInterval(() => {
             Object.keys(this.users).forEach((user) => {
