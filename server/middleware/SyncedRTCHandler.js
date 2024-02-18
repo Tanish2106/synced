@@ -89,7 +89,20 @@ const SyncedRTCHandler = class {
                 { fullName: user.fullName, userId: user.userId, anonymous: user.anonymous }
             );
 
+            /* Get Cached Active User List */
+            const room = this.rtcRoomController.getRoom(roomId);
+            const cachedUserList
+                = room.online.map((onlineUser) => ({
+                        fullName: onlineUser.fullName,
+                        userId: onlineUser.userId,
+                        anonymous: onlineUser.anonymous
+                    }));
+
             /* Send Joinee cached Active User List */
+            user.socket.emit("be-users-cache", cachedUserList);
+
+            /* Add User to Room Controller Cache */
+            room.addOnlineUser(user);
         }
 
         /* 
@@ -252,7 +265,14 @@ const SyncedRTCHandler = class {
 
                 if (roomId.split("-").length == 5) {
                     /* Valid UUID, assuming Valid Room ID */
-                    socket.to(roomId.split("::")[0]).emit('be-users-disconnect', {
+                    const syncedRoomId = roomId.split("::")[0];
+
+                    /* Take User off SyncedRTCRoomController */
+                    this.rtcRoomController
+                        .getRoom(syncedRoomId).removeOnlineUser(socket.rtcUser);
+
+                    /* Send Disconnect to Users in Room */
+                    socket.to(syncedRoomId).emit('be-users-disconnect', {
                         userId: socket.rtcUser.userId,
                         fullName: socket.rtcUser.fullName
                     });

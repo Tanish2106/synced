@@ -27,6 +27,11 @@ const CollabRoomPanelUsers = (props) => {
             );
         })
 
+        socket.on('be-users-cache', (req) => {
+            /* Add Users to ActiveUsers List, Response is array of users */
+            setActiveUsers((activeUsers) => [...activeUsers, ...req]);
+        })
+
         socket.on('be-rooms-userJoined', (req) => {
             /* Update Active Users List */
             setActiveUsers((activeUsers) => [...activeUsers, req]);

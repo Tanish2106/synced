@@ -24,6 +24,22 @@ const SyncedRTCRoom = class {
     constructor(creator) {
         this.roomId = uuid.v4();
         this.hosts = [creator];
+        this.online = [];
+        this.lastModified = Date.now();
+    }
+
+    /* Online User Manipulation Functions */
+    removeOnlineUser = (user) => {
+        const userIndex = this.online.indexOf(user);
+        if (userIndex > -1) this.online.splice(userIndex, 1);
+
+        /* Update Last Modified */
+        this.lastModified = Date.now();
+    }
+
+    addOnlineUser = (user) => {
+        /* Push and Update Last Modified */
+        this.online.push(user);
         this.lastModified = Date.now();
     }
 }
