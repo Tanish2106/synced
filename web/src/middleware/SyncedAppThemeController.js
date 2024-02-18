@@ -3,9 +3,6 @@ import { createTheme } from "@mui/material";
 let appTheme = {
     palette: {
          mode: 'light',
-         primary: {
-            main: '#ffe212'
-         }
     },
     typography: {
         button: {

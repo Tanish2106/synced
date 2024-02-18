@@ -37,11 +37,9 @@ const SyncedRTCUserController = class {
         }, 900000);
     }
 
-    createUser = (username) => {
-        const newUser = new SyncedRTCUser(username);
+    createUser = (fullName, anonymous) => {
+        const newUser = new SyncedRTCUser(fullName, anonymous);
         this.users[newUser.userId] = newUser;
-        this.lastModified = Date.now();
-        this.socket = null;
 
         /* Returns UserID of created User */
         return newUser.userId;

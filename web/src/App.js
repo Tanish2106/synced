@@ -19,9 +19,11 @@
 import * as React from 'react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import SyncedAppThemeController from './middleware/SyncedAppThemeController'
-import { Route, Routes } from 'react-router-dom';
-import SyncedRouterPage from './integrals/SyncedRouterPage';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import SyncedAuthPage from './integrals/SyncedAuthPage';
+import axios from "axios";
+import SyncedAppConfig from './middleware/SyncedAppConfig';
+import SyncedDashboardPage from './integrals/SyncedDashboardPage';
 
 const App = () => {
   /*
@@ -31,6 +33,42 @@ const App = () => {
 
   /* Define Required States */
   const [appTheme, setAppTheme] = React.useState(SyncedAppThemeController.getCurrentTheme());
+
+  const RequiresAuth = (props) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const [children, setChildren] = React.useState({});
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+
+    React.useEffect(() => {
+      /* Verify JWT Token */
+      axios.get(`${SyncedAppConfig.getServerURL()}/auth/verify`, { withCredentials: true })
+        .then((res) => {
+          /* Set Children Props userData */
+          setChildren(
+            React.cloneElement(
+              props.children,
+              { userData: res.data.userData }
+            )
+          );
+
+          /* Set Authenticated */
+          setIsAuthenticated(true);
+        })
+        .catch((err) => { setIsAuthenticated(false); })
+        .finally(() => { setIsLoading(false); });
+    }, []);
+
+    return (
+      (isLoading) ?
+        <></> :
+        (isAuthenticated) ?
+          children :
+          <Navigate to={`/login?for=${location.pathname}`} />
+    );
+  }
 
   /* Write Theme Change Middleware here */
   const toggleTheme = () => {
@@ -44,7 +82,7 @@ const App = () => {
       { /* Define Frontend Routing */}
       <Routes>
         <Route path='/login' element={<SyncedAuthPage />} />
-        <Route path='/*' element={<SyncedRouterPage toggleTheme={toggleTheme} />} />
+        <Route path='/*' element={<RequiresAuth><SyncedDashboardPage toggleTheme={toggleTheme} /></RequiresAuth>} />
       </Routes>
     </ThemeProvider>
   );

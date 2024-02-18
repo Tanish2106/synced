@@ -53,7 +53,7 @@ const SyncedAuthController = class {
                     return res.status(401).json({ status: false, message: "Authentication Token Verification Failed" });
 
                 if (this.rtcUserController.getUser(data.userId))
-                    res.status(200).json({ status: true, userData: { ...data.username } });
+                    res.status(200).json({ status: true, userData: { fullName: data.fullName, userId: data.userId, anonymous: data.anonymous } });
 
                 else
                     res.status(401).json({ status: false, message: "User Expired" });
@@ -61,13 +61,13 @@ const SyncedAuthController = class {
         });
 
         this.app.post("/auth/login", (req, res) => {
-            if (req.body.username && req.body.anonymous) {
+            if (req.body.fullName && req.body.anonymous) {
                 /* Use Anonymous Authorization, Create New User */
-                const newUserId = this.rtcUserController.createUser(req.body.username);
+                const newUserId = this.rtcUserController.createUser(req.body.fullName, true);
 
                 /* Sign The JWT */
                 const authToken = jwt.sign(
-                    { userId: newUserId, username: req.body.username, anonymous: true },
+                    { userId: newUserId, fullName: req.body.fullName, anonymous: true },
                     process.env.JWT_SECRET,
                     { expiresIn: '1800s' }
                 );
@@ -75,11 +75,11 @@ const SyncedAuthController = class {
                 /* Set httpOnly Cookies */
                 res.cookie('authToken', authToken, { httpOnly: true, maxAge: (1000 * 60 * 30) })
                 return res.status(200).send({ message: 'Authentication Successful', status: true });
-            } else if (req.body.username && req.body.password) {
+            } else if (req.body.fullName && req.body.password) {
                 /* Use Database Authentication */
             } else {
                 /* Invalid API Call */
-                return res.status(400).json({ message: "Username or Password Undefined" })
+                return res.status(400).json({ message: "fullName or Password Undefined" })
             }
         });
     }

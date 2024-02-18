@@ -17,13 +17,11 @@
 */
 
 import * as React from 'react';
-import { Box, Button, Paper, Typography } from "@mui/material";
+import { Box, Paper, Typography } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import Groups2Icon from '@mui/icons-material/Groups2';
-import axios from 'axios';
-import SyncedAppConfig from '../middleware/SyncedAppConfig';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'
 
 const CollabJoinOptions = (props) => {
     /* Define Required React State Variables */
@@ -39,12 +37,12 @@ const CollabJoinOptions = (props) => {
         /* Create a New Room */
         socket.emit("fe-rooms-create", (roomId) => {
             /* Navigate to New Page */
-            return navigate(`/collab/${roomId}`);
+            return navigate(`/room/${roomId}`);
         });
     }
 
     return (
-        <Box sx={{ background: 'url("/collab-planet.png");', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', width: "100%", height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ width: "100%", height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Paper
                 sx={{
                     boxShadow: { xs: 0, md: 5 },

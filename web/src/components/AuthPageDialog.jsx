@@ -49,7 +49,7 @@ const AuthPageDialog = (props) => {
     const AnonymousAuthPage = (internal_props) => {
         /* Set Required States */
         const [isAnonAuthLoading, setIsAnonAuthLoading] = React.useState(false);
-        const [anonAuthUsername, setAnonAuthUsername] = React.useState("");
+        const [anonAuthfullName, setAnonAuthfullName] = React.useState("");
 
         const handleAnonymousAuthPageCancel = () => {
             setAuthPage(internal_props.previousPage);
@@ -57,11 +57,11 @@ const AuthPageDialog = (props) => {
 
         const handleAnonymousAuthPageLogin = () => {
             setIsAnonAuthLoading(true);
-            if (anonAuthUsername.trim().length >= 5)
+            if (anonAuthfullName.trim().length >= 5)
                 axios
                     .post(`${SyncedAppConfig.getServerURL()}/auth/login`, {
                         anonymous: true,
-                        username: anonAuthUsername
+                        fullName: anonAuthfullName
                     }, { withCredentials: true })
                     .then((res) => {
                         const searchList = location.search.substring(1).split("=");
@@ -84,9 +84,9 @@ const AuthPageDialog = (props) => {
 
         return (
             <>
-                <TextField value={anonAuthUsername} onChange={(e) => { setAnonAuthUsername(e.target.value) }} autoFocus label="Username" sx={{ width: { xs: '100%', md: '60%' } }} variant='outlined'></TextField>
+                <TextField value={anonAuthfullName} onChange={(e) => { setAnonAuthfullName(e.target.value) }} autoFocus label="Enter your Name" sx={{ width: { xs: '100%', md: '60%' } }} variant='outlined'></TextField>
                 <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', md: '40%' }, alignItems: 'center', justifyContent: 'center' }}>
-                    <LoadingButton loading={isAnonAuthLoading} disabled={(anonAuthUsername.trim().length < 5)} onClick={handleAnonymousAuthPageLogin} sx={{ marginTop: '15px', flexGrow: 1 }} variant='contained'>Login</LoadingButton>
+                    <LoadingButton loading={isAnonAuthLoading} disabled={(anonAuthfullName.trim().length < 5)} onClick={handleAnonymousAuthPageLogin} sx={{ marginTop: '15px', flexGrow: 1 }} variant='contained'>Login</LoadingButton>
                     <Button disabled={isAnonAuthLoading} onClick={handleAnonymousAuthPageCancel} sx={{ marginTop: '15px', flexGrow: 0.3 }} variant='outlined'>Cancel</Button>
                 </Box>
             </>

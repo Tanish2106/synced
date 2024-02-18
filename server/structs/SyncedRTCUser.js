@@ -20,10 +20,11 @@
 const uuid = require("uuid");
 
 const SyncedRTCUser = class {
-    constructor(username) {
+    constructor(fullName, anonymous) {
         this.userId = uuid.v4();
-        this.username = username;
+        this.fullName = fullName;
         this.lastModified = Date.now();
+        this.anonymous = anonymous;
         this.socket = undefined;
     }
 };

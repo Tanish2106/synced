@@ -21,7 +21,7 @@ import AuthPageDialog from "../components/AuthPageDialog";
 
 const SyncedAuthPage = (props) => {
     return (
-        <Box sx={{ background: 'url("/collab-planet.png");', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', width: "100%", height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box className="gradient-background" sx={{ width: "100%", height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Paper
                 sx={{
                     boxShadow: { xs: 0, md: 5 },

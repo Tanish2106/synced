@@ -76,6 +76,22 @@ const SyncedRTCHandler = class {
             callback(roomId);
         });
 
+        /* Onboard User in room */
+        const onboardUser = (user, roomId) => {
+            /* 
+                user: SyncedRTCUser,
+                roomId: String
+            */
+
+            /* Tell Others, User Joined */
+            this.io.in(roomId).emit(
+                "be-rooms-userJoined",
+                { fullName: user.fullName, userId: user.userId, anonymous: user.anonymous }
+            );
+
+            /* Send Joinee cached Active User List */
+        }
+
         /* 
             How does the waitlist flow work?
             1. fe-rooms-join: Emitted when a client requests to join room.
@@ -96,13 +112,7 @@ const SyncedRTCHandler = class {
                 socket.join(`${roomId}::hosts`);
 
                 /* Inform Users Host Joined */
-                this.io.in(roomId).emit(
-                    "be-rooms-userJoined",
-                    {
-                        username: socket.rtcUser.username,
-                        userId: socket.rtcUser.userId
-                    }
-                );
+                onboardUser(socket.rtcUser, roomId);
 
                 /* Callback to Inform Successful connection */
                 return callback(null, {})
@@ -114,8 +124,9 @@ const SyncedRTCHandler = class {
                 this.io.in(`${roomId}::hosts`).emit(
                     "be-rooms-guestJoinRequest",
                     {
-                        username: socket.rtcUser.username,
+                        fullName: socket.rtcUser.fullName,
                         userId: socket.rtcUser.userId,
+                        anonymous: socket.rtcUser.anonymous,
                         roomId: roomId
                     }
                 );
@@ -152,7 +163,7 @@ const SyncedRTCHandler = class {
             /* Revoke Guest Join Request for all Hosts. One Acted. */
             this.io.in(`${roomId}::hosts`).emit(
                 "be-rooms-guestJoinRevoke",
-                { username: user.username, userId: user.userId }
+                { fullName: user.fullName, userId: user.userId }
             );
 
             /* Apply Approval Actions */
@@ -161,10 +172,7 @@ const SyncedRTCHandler = class {
                 user.socket.join(roomId);
 
                 /* Inform Users Guest Joined */
-                this.io.in(roomId).emit(
-                    "be-rooms-userJoined",
-                    { username: user.username, userId: user.userId }
-                );
+                onboardUser(user, roomId);
             }
 
             /*
@@ -201,7 +209,7 @@ const SyncedRTCHandler = class {
 
             Response Structure:
             res.userId: socket.rtcUser.userId
-            res.username: socket.rtcUser.username
+            res.fullName: socket.rtcUser.fullName
             res.message: req.message
             res.time: new Date().getTime();
         */
@@ -220,7 +228,7 @@ const SyncedRTCHandler = class {
 
             this.io.in(room.roomId).emit('be-chats-message', {
                 userId: socket.rtcUser.userId,
-                username: socket.rtcUser.username,
+                fullName: socket.rtcUser.fullName,
                 message: req.message,
                 time: new Date().getTime()
             });
@@ -230,6 +238,27 @@ const SyncedRTCHandler = class {
             Process a Socket Disconnect. Steps to Follow:
             L. Notify Users
         */
+
+        socket.on('disconnecting', () => {
+            /* Notify Users in all rooms socket was part of */
+            const rooms = socket.rooms;
+            rooms.forEach((roomId) => {
+                /* 
+                    1. First element of socket.rooms is the SocketID
+                    2. We've joined ::hosts and ::waitlist also,
+                       we dont want emitting multiple disconnects.
+                    3. Therefore, Check and filter, send only one disc.
+                */
+
+                if (roomId.split("-").length == 5) {
+                    /* Valid UUID, assuming Valid Room ID */
+                    socket.to(roomId.split("::")[0]).emit('be-users-disconnect', {
+                        userId: socket.rtcUser.userId,
+                        fullName: socket.rtcUser.fullName
+                    });
+                }
+            });
+        });
     };
 }
 
