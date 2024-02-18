@@ -93,10 +93,10 @@ const SyncedRTCHandler = class {
             const room = this.rtcRoomController.getRoom(roomId);
             const cachedUserList
                 = room.online.map((onlineUser) => ({
-                        fullName: onlineUser.fullName,
-                        userId: onlineUser.userId,
-                        anonymous: onlineUser.anonymous
-                    }));
+                    fullName: onlineUser.fullName,
+                    userId: onlineUser.userId,
+                    anonymous: onlineUser.anonymous
+                }));
 
             /* Send Joinee cached Active User List */
             user.socket.emit("be-users-cache", cachedUserList);
@@ -162,8 +162,8 @@ const SyncedRTCHandler = class {
             const room = this.rtcRoomController.getRoom(req.roomId);
             if (!room) return callback("Room Not Found!", null);
 
-            /* Check if User is Host */
-            if (!room.hosts.includes(socket.rtcUser))
+            /* Check if User is Room Host */
+            if (!room.isUserHost(socket.rtcUser))
                 return callback("Only Hosts Can Approve Guests");
 
             /* Check if Requested User Exists */
@@ -248,6 +248,103 @@ const SyncedRTCHandler = class {
         });
 
         /*
+            Process Source Add Requests from host. Steps:
+            1. Event emitted fe-sources-add
+            2. Get Source and Host Info and Room
+            3. Check if User is Room Host
+            4. Notify Users in Room about source add.
+
+            Request Structure:
+            req.sourceURL: String,
+            req.sourceType: YOUTUBE
+        */
+
+        socket.on('fe-sources-add', (req, callback) => {
+            /* Check if Room Exists */
+            const room = this.rtcRoomController.getRoom(req.roomId);
+            if (!room) return callback("Room Not Found!", null);
+
+            /* Check if User is Room Host */
+            if (!room.isUserHost(socket.rtcUser))
+                return callback("Only Hosts Can Approve Guests");
+
+            /* Check if Source Type is Supported */
+            const sourceType = SyncedRTCSource.sourceType[req.sourceType];
+            if (!sourceType)
+                return callback("Source Type is not Supported");
+
+            /* Check SourceURL Validity, CHECK ON PRODUCTION!!! */
+            if (!req.sourceURL.trim().length > 1)
+                return callback("Invalid Source URL");
+
+            /* Add Source to Room Playlist */
+            const source = new SyncedRTCSource(sourceType, req.sourceURL);
+            room.addSource(source);
+
+            /* Notify Users about source add */
+            this.io.in(room.roomId).emit('be-sources-add', source);
+            return callback(null, { status: true });
+        });
+            
+        /*
+            Process Source Remove Request from host. Steps:
+            1. Event emitted fe-sources-delete
+            2. Get SourceID.
+            3. Remove Source, if exists.
+            4. Inform users about source removal.
+
+            Request Structure:
+            req.roomId: String
+            req.sourceURL: String
+        */
+
+        socket.on('fe-sources-delete', (req, callback) => {
+            /* Check if Room Exists */
+            const room = this.rtcRoomController.getRoom(req.roomId);
+            if (!room) return callback("Room Not Found!", null);
+
+            /* Check if User is Room Host */
+            if (!room.isUserHost(socket.rtcUser))
+                return callback("Only Hosts Can Approve Guests");
+
+            /* Call Remove Remove Source */
+            room.removeSource(req.sourceURL);
+
+            /* Notify Users of source removal */
+            this.io.in(room.roomId).emit('be-sources-delete', req.sourceURL);
+            return callback(null, { status: true });
+        });
+
+        /*
+            Process Set Current Source from Host. Steps:
+            1. Emitted Event fe-sources-playing
+            2. Get SourceURL
+            3. Set room.CurrentSource
+            4. Inform users about source playing.
+        */
+
+        socket.on('fe-sources-playing', (req, callback) => {
+            /* Check if Room Exists */
+            const room = this.rtcRoomController.getRoom(req.roomId);
+            if (!room) return callback("Room Not Found!", null);
+
+            /* Check if User is Room Host */
+            if (!room.hosts.includes(socket.rtcUser))
+                return callback("Only Hosts Can Approve Guests");
+
+            /* Check Source URL Validity, FIX IN PRODUCTION!!! */
+            if (req.sourceURL.length < 1)
+                return callback("Invalid Source URL");
+
+            /* Set Currently Playing Source */
+            room.setSourcePlaying(req.sourceURL)
+            
+            /* Notify users about playing source */
+            this.io.in(room.roomId).emit('be-sources-playing', req.sourceURL);
+            return callback(null, { status: true });
+        });
+
+        /*
             Process a Socket Disconnect. Steps to Follow:
             L. Notify Users
         */
@@ -275,7 +372,7 @@ const SyncedRTCHandler = class {
                     socket.to(syncedRoomId).emit('be-users-disconnect', {
                         userId: socket.rtcUser.userId,
                         fullName: socket.rtcUser.fullName
-                    });
+                });
                 }
             });
         });

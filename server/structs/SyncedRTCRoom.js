@@ -20,12 +20,52 @@
 const uuid = require("uuid");
 
 const SyncedRTCRoom = class {
+    /*
+        Designing A Souce Workflow:
+        1. Have a sources list in the server.
+        2. Have a currently playing source in the server
+
+        sourceList = Map of Sources
+        sourcePlaying = URI of Source
+
+        Have a sources struct:
+        and Source Types as defined in SyncedRTCSource.js
+    */
+
     /* Creator is a SyncedRTCUser */
     constructor(creator) {
         this.roomId = uuid.v4();
         this.hosts = [creator];
         this.online = [];
+        this.sourceList = new Map();
+        this.sourcePlaying = null;
         this.lastModified = Date.now();
+    }
+
+    addSource = (source) => {
+        /* Check if source exists already */
+        if (!this.sourceList.get(source.uri))
+            this.sourceList.set(source.uri, source);
+
+        /* Update Last Modified */
+        this.lastModified = Date.now();
+    }
+
+    removeSource = (sourceURI) => {
+        /* Take source off and Update Last Modified */
+        this.sourceList.delete(sourceURI);
+        this.lastModified = Date.now();
+    }
+
+    setSourcePlaying = (sourceURI) => {
+        /* Update Source and Last Modified */
+        this.sourcePlaying = sourceURI;
+        this.lastModified = Date.now();
+    }
+
+    /* Middleware */
+    isUserHost = (user) => {
+        return room.hosts.includes(user);
     }
 
     /* Online User Manipulation Functions */
