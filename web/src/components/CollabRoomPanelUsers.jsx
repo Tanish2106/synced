@@ -65,7 +65,7 @@ const CollabRoomPanelUsers = (props) => {
                 (!waitlistUsers.length > 0) ?
                     <></> :
                     <>
-                        <Typography sx={{ padding: '10px 10px 0px 10px' }} variant="h5">Waiting Room</Typography>
+                        <Typography sx={{ padding: '20px 10px 0px 20px' }} variant="h5">Waiting Room</Typography>
                         <List>
                             {
                                 waitlistUsers.map((user) => (
@@ -81,7 +81,7 @@ const CollabRoomPanelUsers = (props) => {
             }
 
             { /* Active Users List */}
-            <Typography sx={{ padding: '10px 10px 0px 10px' }} variant="h5">Active Users</Typography>
+            <Typography sx={{ padding: '20px 10px 0px 20px' }} variant="h5">Active Users</Typography>
             <List>
                 {
                     activeUsers.map((user) => (

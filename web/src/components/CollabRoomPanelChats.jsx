@@ -70,7 +70,7 @@ const CollabRoomPanelChats = (props) => {
                 }
             </Box>
             <Box sx={{ display: 'flex' }}>
-                <OutlinedInput placeholder='Message' variant="outlined" value={msgValue} onKeyDown={(k) => { if (k.key == 'Enter') sendMessage() }} onChange={(e) => { setMsgValue(e.target.value) }} endAdornment={
+                <OutlinedInput sx={{ width: '100%', borderRadius: '10px' }} placeholder='Message' variant="outlined" value={msgValue} onKeyDown={(k) => { if (k.key == 'Enter') sendMessage() }} onChange={(e) => { setMsgValue(e.target.value) }} endAdornment={
                     <InputAdornment position='end'>
                         <IconButton disabled={(msgValue.trim().length == 0)} style={{ marginLeft: '3px', borderRadius: '10%' }} onClick={sendMessage} size="small">
                             <SendIcon />

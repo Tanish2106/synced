@@ -150,7 +150,7 @@ const CollabRoomCore = (props) => {
                     display: { xs: 'none', sm: 'block' },
                     '& .MuiDrawer-paper': {
                         boxSizing: 'border-box',
-                        width: { xs: '35%', md: '25%' },
+                        width: { xs: '35%', lg: '30%' },
                     },
                 }}
             >
