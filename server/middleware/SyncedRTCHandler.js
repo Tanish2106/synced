@@ -20,6 +20,7 @@
 const SyncedAuthController = require("./SyncedAuthController");
 const SyncedRTCRoomController = require("./SyncedRTCRoomController");
 const SyncedRTCUserController = require("./SyncedRTCUserController");
+const SyncedRTCSource = require("./../structs/SyncedRTCSource");
 
 const parseCookies = (cookieString) => {
     const searchList = cookieString.split("=");
@@ -95,11 +96,31 @@ const SyncedRTCHandler = class {
                 = room.online.map((onlineUser) => ({
                     fullName: onlineUser.fullName,
                     userId: onlineUser.userId,
-                    anonymous: onlineUser.anonymous
+                    anonymous: onlineUser.anonymous,
+                    isHost: room.isUserHost(onlineUser)
                 }));
 
             /* Send Joinee cached Active User List */
             user.socket.emit("be-users-cache", cachedUserList);
+
+            /* Send Joinee Source Cache, If Exists. */
+            if (room.sourceCurrent) {
+                /* Send a Sources Add Message */
+                user.socket.emit('be-sources-add', room.getSource(room.sourceCurrent));
+
+                /* Wait for Frontend to Initialize */
+                setTimeout(() => {
+                    const source = room.getSource(room.sourceCurrent);
+                    user.socket.emit('be-sources-update', {
+                        sourceURL: source.uri,
+                        playing: source.playing,
+                        currentPos:
+                            (source.playing) ?
+                                (source.currentPos + ((Date.now() - source.lastModified) / 1000)) :
+                                (source.currentPos)
+                    });
+                }, 1500);
+            }
 
             /* Add User to Room Controller Cache */
             room.addOnlineUser(user);
@@ -119,7 +140,7 @@ const SyncedRTCHandler = class {
             if (!room) return callback("Room Not Found!", null);
 
             /* Room Exists, Check if User is Host/Guest */
-            if (room.hosts.includes(socket.rtcUser)) {
+            if (room.isUserHost(socket.rtcUser)) {
                 /* User Is Host, Join Room */
                 socket.join(roomId);
                 socket.join(`${roomId}::hosts`);
@@ -128,7 +149,7 @@ const SyncedRTCHandler = class {
                 onboardUser(socket.rtcUser, roomId);
 
                 /* Callback to Inform Successful connection */
-                return callback(null, {})
+                return callback(null, { isHost: true })
             } else {
                 /* User Is Guest, Join Waitlist Group */
                 socket.join(`${roomId}::waitlist`);
@@ -145,7 +166,7 @@ const SyncedRTCHandler = class {
                 );
 
                 /* Tell User they're waitlisted */
-                return callback(null, { waitlisted: true })
+                return callback(null, { waitlisted: true, isHost: false })
             }
         });
 
@@ -266,11 +287,11 @@ const SyncedRTCHandler = class {
 
             /* Check if User is Room Host */
             if (!room.isUserHost(socket.rtcUser))
-                return callback("Only Hosts Can Approve Guests");
+                return callback("Only Hosts Can Add Videos");
 
             /* Check if Source Type is Supported */
-            const sourceType = SyncedRTCSource.sourceType[req.sourceType];
-            if (!sourceType)
+            const sourceType = Object.values(SyncedRTCSource.sourceType).indexOf(req.sourceType);
+            if (sourceType < 0)
                 return callback("Source Type is not Supported");
 
             /* Check SourceURL Validity, CHECK ON PRODUCTION!!! */
@@ -278,14 +299,14 @@ const SyncedRTCHandler = class {
                 return callback("Invalid Source URL");
 
             /* Add Source to Room Playlist */
-            const source = new SyncedRTCSource(sourceType, req.sourceURL);
+            const source = new SyncedRTCSource(req.sourceType, req.sourceURL);
             room.addSource(source);
 
             /* Notify Users about source add */
             this.io.in(room.roomId).emit('be-sources-add', source);
             return callback(null, { status: true });
         });
-            
+
         /*
             Process Source Remove Request from host. Steps:
             1. Event emitted fe-sources-delete
@@ -323,7 +344,7 @@ const SyncedRTCHandler = class {
             4. Inform users about source playing.
         */
 
-        socket.on('fe-sources-playing', (req, callback) => {
+        socket.on('fe-sources-update', (req, callback) => {
             /* Check if Room Exists */
             const room = this.rtcRoomController.getRoom(req.roomId);
             if (!room) return callback("Room Not Found!", null);
@@ -337,10 +358,10 @@ const SyncedRTCHandler = class {
                 return callback("Invalid Source URL");
 
             /* Set Currently Playing Source */
-            room.setSourcePlaying(req.sourceURL)
-            
-            /* Notify users about playing source */
-            this.io.in(room.roomId).emit('be-sources-playing', req.sourceURL);
+            room.updateSource(req.sourceURL, req.currentPos, req.playing);
+
+            /* Notify users about playing source. Don't Notify Sender, they triggered it. */
+            socket.to(room.roomId).emit('be-sources-update', req);
             return callback(null, { status: true });
         });
 
@@ -372,7 +393,7 @@ const SyncedRTCHandler = class {
                     socket.to(syncedRoomId).emit('be-users-disconnect', {
                         userId: socket.rtcUser.userId,
                         fullName: socket.rtcUser.fullName
-                });
+                    });
                 }
             });
         });

@@ -18,6 +18,9 @@
 
 import { Avatar, Box, Divider, IconButton, Stack, Toolbar, Typography, ListItemAvatar, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import SyncedAppThemeController from "../middleware/SyncedAppThemeController";
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import CollabJoinOptions from "../components/CollabJoinOptions";
 import Groups2Icon from '@mui/icons-material/Groups2';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -53,12 +56,25 @@ const SyncedDashboardPage = (props) => {
 
     return (
         <Box sx={{ background: { xs: '', md: (hasBackground) ? 'url("/collab-planet.png");' : "" }, backgroundSize: 'cover', backgroundRepeat: 'no-repeat', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Toolbar sx={{ bgcolor: "#121212", boxShadow: 0, display: 'flex', alignItems: 'center', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+            <Toolbar sx={{ bgcolor: hasBackground ? 'transparent' : 'background.default', boxShadow: 0, display: 'flex', alignItems: 'center', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
                 <Stack sx={{ flexGrow: 1 }} direction="row" spacing={1}>
-                    <Groups2Icon sx={{ color: 'primary.main', fontSize: '2rem' }} />
-                    <Typography variant='h5' sx={{ lineHeight: 1.6 }}>Synced</Typography>
+                    <Groups2Icon sx={{ color: SyncedAppThemeController.isLightMode() ? 'primary.light' : 'primary.main', fontSize: '2rem' }} />
+                    <Typography variant='h5' sx={{ lineHeight: 1.6, color: hasBackground ? 'white' : 'text.primary' }}>Synced</Typography>
                 </Stack>
 
+                { 
+                    /* Dark Mode Switch Button */
+                    /*    
+                        <IconButton onClick={props.toggleTheme} sx={{ color: hasBackground ? 'white' : 'text.primary', marginRight: '15px', borderRadius: '50%' }}>
+                        {
+                            (SyncedAppThemeController.isLightMode()) ?
+                                <DarkModeIcon /> :
+                                <LightModeIcon />
+                        }
+                        </IconButton> 
+                    */   
+                }
+                
                 { /* Set Avatar */}
                 <IconButton onClick={(e) => { setMenuAnchorEl(e.currentTarget); setIsMenuOpen(!isMenuOpen); }}>
                     <Avatar sx={{ bgcolor: 'secondary.light' }} />

@@ -17,18 +17,24 @@
 */
 
 import * as React from 'react';
-import { Badge, Box, Button, Dialog, DialogContent, Divider, LinearProgress, Tab, Tabs, Toolbar, Typography } from "@mui/material";
+import { Badge, Box, Button, Dialog, DialogContent, Divider, LinearProgress, Paper, Tab, Tabs, Toolbar, Typography } from "@mui/material";
 import { useLocation, useNavigate } from 'react-router-dom';
 import ErrorIcon from '@mui/icons-material/Error';
 import LiveTvIcon from '@mui/icons-material/LiveTv';
 import MessageIcon from '@mui/icons-material/Message';
 import GroupIcon from '@mui/icons-material/Group';
+import Replay10Icon from '@mui/icons-material/Replay10';
+import Forward10Icon from '@mui/icons-material/Forward10';
+import PauseCircleIcon from '@mui/icons-material/PauseCircle';
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import Drawer from '@mui/material/Drawer';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CollabRoomPanelPlaylist from './CollabRoomPanelPlaylist';
 import CollabRoomPanelChats from './CollabRoomPanelChats';
 import SyncedCollabController from '../middleware/SyncedCollabController';
 import CollabRoomPanelUsers from './CollabRoomPanelUsers';
+import SyncedVideoSource from '../structs/SyncedVideoSource';
+import NotStartedIcon from '@mui/icons-material/NotStarted';
 
 /* Static variable for re-renders */
 let staticCurrentTab = 0;
@@ -79,10 +85,19 @@ const CollabRoomCore = (props) => {
     const SETTINGS_TAB = 3;
 
     /* Set Required States */
+    const [playlistPanelControls, setPlaylistPanelControls] = React.useState(null);
     const [currentTab, setCurrentTab] = React.useState(PLAYLIST_TAB);
     const [dialogPage, setDialogPage] = React.useState(<DialogLoadingPage title="📡 Establishing Connection..." />);
     const [dialogOpen, setDialogOpen] = React.useState(true);
     const [isJoined, setIsJoined] = React.useState(false);
+
+    /* States for SourcePlayer */
+    const sourcePlayer = React.useRef();
+    const [currentSource, setSourcePlaying] = React.useState(null);
+    const [sourcePlayerContent, setSourcePlayerContent] = React.useState(<></>);
+
+    /* Set Host Role */
+    const [isHost, setIsHost] = React.useState(false);
 
     /* Set Message Notification States */
     const [unreadMessages, setUnreadMessages] = React.useState(0);
@@ -98,6 +113,7 @@ const CollabRoomCore = (props) => {
 
             /* We've Joined the Room */
             setIsJoined(true);
+            setIsHost(res.isHost);
             setDialogOpen(false);
         });
 
@@ -110,10 +126,16 @@ const CollabRoomCore = (props) => {
                 setDialogPage(<DialogRoomJoinError title="You can't join this Room" />)
             }
         });
+
+        /* Media Load Message */
+        socket.on('be-sources-add', (req) => {
+            /* Req is partially of type SyncedVideoSource */
+            handleLoadSource(new SyncedVideoSource(req.uri));
+        });
     }
 
     /* Define Handlers */
-    const handleDrawerTabChange = (e, newValue) => {        
+    const handleDrawerTabChange = (e, newValue) => {
         /* Change Tab */
         staticCurrentTab = newValue;
         setCurrentTab(newValue);
@@ -122,10 +144,98 @@ const CollabRoomCore = (props) => {
         if (staticCurrentTab == MESSAGES_TAB) setUnreadMessages(0);
     }
 
+    const handleLoadSource = (source) => {
+        /*
+            Input Parameter source:
+                typeof SyncedVideoSource
+        */
+
+        setSourcePlaying(source);
+        switch (source.srcType) {
+            case SyncedVideoSource.sourceType.YOUTUBE: {
+                console.log(source);
+                /* Set Player Source */
+                setSourcePlayerContent(
+                    <iframe
+                        allow="autoplay"
+                        src={`https://www.youtube.com/embed/${source.ytEmbedURL}?enablejsapi=1`}
+                        width="100%" height="100%"
+                        style={{ position: 'absolute', border: '0px' }}
+                        id="yt-player" />
+                );
+
+                break;
+            }
+
+            default: {
+                console.log("Unsupported Source");
+                break;
+            }
+        }
+    }
+
     React.useEffect(() => {
         /* Configure RTC Middleware */
         initRTCMiddleware();
     }, []);
+
+    React.useEffect(() => {
+        if (currentSource) {
+            if (currentSource.srcType == SyncedVideoSource.sourceType.YOUTUBE) {
+                const onReady = (e) => {
+                    /* Get Player */
+                    const player = e.target;
+
+                    /* Listen for Socket Update Events */
+                    socket.on('be-sources-update', (req) => {
+                        /* Update Player Position */
+                        player.seekTo(req.currentPos, true);
+
+                        /* Update Play/Pause State */
+                        if (req.playing) player.playVideo();
+                        else player.pauseVideo();
+                    });
+
+                    /* Start Playback */
+                    setTimeout(() => {
+                        player.playVideo();
+                    }, 2500);
+
+                    //setTimeout(() => { /*setSourcePlayerContent(<></>);*/ }, 2500);
+
+                    /* Set Playlist Panel Controls */
+                    /*setPlaylistPanelControls((playlistPanelControls) => [
+                        { icon: <Replay10Icon />, onClick: () => {} },
+                        { icon: <NotStartedIcon />, onClick: togglePlay },
+                        { icon: <Forward10Icon />, onClick: () => {} }
+                    ]);*/
+                }
+
+                const onError = (e) => {
+                    console.error(e);
+                }
+
+                const onStateChange = (e) => {
+                    if (isHost) {
+                        /* Transmit Changes since User is Host */
+                        socket.emit(
+                            'fe-sources-update', {
+                            roomId,
+                            sourceURL: currentSource.uri.toString(),
+                            currentPos: e.target.getCurrentTime(),
+                            playing: (e.data == 1)
+                        }, () => { }
+                        );
+                    }
+                }
+
+                /* POTENTIAL MEMORY LEAK! TEST FOR PRODUCTION!!! */
+                window.ytp = new window.YT.Player('yt-player', {
+                    events: { onReady, onError, onStateChange }
+                });
+            }
+        }
+    }, [sourcePlayerContent])
 
     React.useEffect(() => {
         if (isJoined == true) {
@@ -141,13 +251,23 @@ const CollabRoomCore = (props) => {
     }, [isJoined]);
 
     return (
-        <Box sx={{ width: '100%', height: '100%' }}>
+        <Box sx={{ display: 'flex', width: '100%', height: '100%' }}>
+            { /* Primary Content Page */}
+            <Box sx={{ flexGrow: 1, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <Paper ref={sourcePlayer} elevation={4} sx={{ position: 'relative', overflow: 'hidden', borderRadius: '15px', width: '100%', height: 'auto', aspectRatio: '16/9' }}>
+                    {sourcePlayerContent}
+                    {(isHost) ? <></> : <Box sx={{ width: '100%', height: '100%', position: 'absolute' }} />}
+                </Paper>
+            </Box>
+
+            { /* Permanent Side Drawer for Desktops */}
             <Drawer
                 open
                 variant="permanent"
                 anchor="right"
                 sx={{
                     display: { xs: 'none', sm: 'block' },
+                    width: { xs: '35%', lg: '30%' },
                     '& .MuiDrawer-paper': {
                         boxSizing: 'border-box',
                         width: { xs: '35%', lg: '30%' },
@@ -175,7 +295,7 @@ const CollabRoomCore = (props) => {
                     </Tabs>
                     <Divider orientation='vertical' />
                     <Box sx={{ flexGrow: 1, overflow: 'auto', maxWidth: 'calc(100% - 90px)', maxHeight: '100%' }}>
-                        <CollabRoomPanelPlaylist sx={{ display: (currentTab == PLAYLIST_TAB ? 'flex' : 'none') }} />
+                        <CollabRoomPanelPlaylist socket={socket} isHost={isHost} controls={playlistPanelControls} loadSource={handleLoadSource} sx={{ display: (currentTab == PLAYLIST_TAB ? 'flex' : 'none') }} />
                         <CollabRoomPanelChats socket={socket} sx={{ display: (currentTab == MESSAGES_TAB ? 'flex' : 'none') }} />
                         <CollabRoomPanelUsers socket={socket} sx={{ display: (currentTab == USERS_TAB ? 'flex' : 'none') }} />
                     </Box>

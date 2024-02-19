@@ -26,6 +26,9 @@ const SyncedRTCSource = class {
         this.srcType = srcType;
         this.uri = uri;
         this.currentPos = 0;
-        this.paused = true;
+        this.playing = false;
+        this.lastModified = Date.now();
     }
 }
+
+module.exports = SyncedRTCSource;

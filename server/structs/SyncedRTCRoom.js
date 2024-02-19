@@ -26,7 +26,7 @@ const SyncedRTCRoom = class {
         2. Have a currently playing source in the server
 
         sourceList = Map of Sources
-        sourcePlaying = URI of Source
+        sourceCurrent = URI of Source
 
         Have a sources struct:
         and Source Types as defined in SyncedRTCSource.js
@@ -38,7 +38,7 @@ const SyncedRTCRoom = class {
         this.hosts = [creator];
         this.online = [];
         this.sourceList = new Map();
-        this.sourcePlaying = null;
+        this.sourceCurrent = null;
         this.lastModified = Date.now();
     }
 
@@ -57,15 +57,30 @@ const SyncedRTCRoom = class {
         this.lastModified = Date.now();
     }
 
-    setSourcePlaying = (sourceURI) => {
-        /* Update Source and Last Modified */
-        this.sourcePlaying = sourceURI;
+    getSource = (sourceURI) => {
+        return this.sourceList.get(sourceURI);
+    }
+
+    updateSource = (sourceURI, currentPos, playing) => {
+        /* Update Source */
+        const source = this.sourceList.get(sourceURI);
+        if (!source) return "SyncedRTCRoom: Missing Source";
+        
+        /* Update Params */
+        source.currentPos = currentPos;
+        source.playing = playing;
+        source.lastModified = Date.now();
+
+        /* Set Currently Playing Source */
+        this.sourceCurrent = sourceURI;
+
+        /* Update Last Modified */
         this.lastModified = Date.now();
     }
 
     /* Middleware */
     isUserHost = (user) => {
-        return room.hosts.includes(user);
+        return this.hosts.includes(user);
     }
 
     /* Online User Manipulation Functions */
