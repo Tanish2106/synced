@@ -103,6 +103,9 @@ const SyncedRTCHandler = class {
             /* Send Joinee cached Active User List */
             user.socket.emit("be-users-cache", cachedUserList);
 
+            /* Send Next Playlist Cache, if Exists */
+            
+
             /* Send Joinee Source Cache, If Exists. */
             if (room.sourceCurrent) {
                 /* Send a Sources Add Message */

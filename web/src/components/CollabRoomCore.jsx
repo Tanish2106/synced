@@ -106,6 +106,9 @@ const CollabRoomCore = (props) => {
     const roomId = SyncedCollabController.getRoomId(location.pathname);
 
     const initRTCMiddleware = () => {
+        /* Send Heartbeat Signal every Five Minute, Rooms and Users Deleted in 30 minutes */
+        
+        
         /* Configure SocketIO Middleware */
         socket.emit("fe-rooms-join", roomId, (err, res) => {
             if (err) return setDialogPage(<DialogRoomJoinError title={err} />);
