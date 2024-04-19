@@ -1,15 +1,16 @@
 const config = {
     serverProtocol: 'http',
     wsProtocol: 'ws',
-    serverURL: 'localhost:8000',
+    serverURL: 'synced.atheesh.org:8000',
+    isProd: true,
 };
 
 const getServerURL = () => {
-    return `${config.serverProtocol}://${config.serverURL}`;
+    return (isProd) ? "" : `${config.serverProtocol}://${config.serverURL}`;
 }
 
 const getWsURL = () => {
-    return `${config.wsProtocol}://${config.serverURL}`;
+    return (isProd) ? "" : `${config.wsProtocol}://${config.serverURL}`;
 }
 
 export default { 

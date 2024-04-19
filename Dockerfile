@@ -9,5 +9,5 @@ COPY server/ ./
 RUN npm install --production
 COPY --from=syncedui /ui/build ./public
 
-EXPOSE 6001
+EXPOSE 8000
 CMD ["node", "./synced-server.js"]

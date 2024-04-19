@@ -24,7 +24,7 @@ const port = 8000
 
 /* Set Cors Config */
 const corsConfig = {
-  origin: ['http://localhost:6001', 'http://10.104.188.229:6001'],
+  origin: ['http://localhost:8000', 'http://synced.atheesh.org:8000'],
   methods: ['GET', 'POST'],
   credentials: true
 };
@@ -48,13 +48,17 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsConfig));
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
+app.get('/api', (req, res) => {
+  res.send('Synced Server Listening to API Requests!')
 })
 
 httpServer.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Synced Server listening on port ${port}`)
 
   /* Define Required Contollers */
   new SyncedRTCHandler(app, io_collab);
+
+  /* Serving the Public Folder */
+  app.use(express.static(__dirname + '/public'));
+  app.get('*', (req,res) => res.sendFile(__dirname+'/public/index.html'))
 })
