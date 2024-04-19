@@ -6,11 +6,11 @@ const config = {
 };
 
 const getServerURL = () => {
-    return (isProd) ? "" : `${config.serverProtocol}://${config.serverURL}`;
+    return (config.isProd) ? "" : `${config.serverProtocol}://${config.serverURL}`;
 }
 
 const getWsURL = () => {
-    return (isProd) ? "" : `${config.wsProtocol}://${config.serverURL}`;
+    return (config.isProd) ? "" : `${config.wsProtocol}://${config.serverURL}`;
 }
 
 export default { 
